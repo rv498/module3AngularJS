@@ -4,21 +4,21 @@
     controller("NarrowItDownController", NarrowItDownController).
     service("MenuSearchService", MenuSearchService).
     directive("foundItems", FoundItems).
-    constant("REST_API_URL", "//davids-restaurant.herokuapp.com/menu_items.json");
+    constant("URL", "//davids-restaurant.herokuapp.com/menu_items.json");
 
   NarrowItDownController.$inject = ["MenuSearchService"];
   function NarrowItDownController(MenuSearchService) {
     var menu = this;
 
     menu.found = [];
-    menu.searchTerm = "";
+    menu.searchPhrase = "";
     menu.showError = false;
 
     menu.narrowItDown = function () {
       menu.found = [];
 
-      if (menu.searchTerm) {
-        var foundItemsPromise = MenuSearchService.getMatchedMenuItems(menu.searchTerm);
+      if (menu.searchPhrase) {
+        var foundItemsPromise = MenuSearchService.getMatchedMenuItems(menu.searchPhrase);
         foundItemsPromise.then(function (items) {
           menu.found = items;
           menu.setShowError();
@@ -37,14 +37,14 @@
     };
   }
 
-  MenuSearchService.$inject = ["$http", "REST_API_URL"];
-  function MenuSearchService($http, REST_API_URL) {
+  MenuSearchService.$inject = ["$http", "URL"];
+  function MenuSearchService($http, URL) {
     var service = this;
 
-    service.getMatchedMenuItems = function (searchTerm) {
+    service.getMatchedMenuItems = function (searchPhrase) {
       return $http({
         method: 'GET',
-        url: REST_API_URL,
+        url: URL,
       }).then(function (response) {
         return response.data.menu_items.filter(function (item) {
           return item.description.indexOf(searchTerm) !== -1;
