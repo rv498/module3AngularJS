@@ -1,16 +1,19 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-ng-app="NarrowItDownApp">
   <head>
     <title>Narrow Down Your Menu Choice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="styles/bootstrap.min.css">
     <link rel="stylesheet" href="styles/styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+    <script src="app.js"></script>
+    
   </head>
 <body>
    <div class="container">
     <h1>Narrow Down Your Chinese Menu Choice</h1>
 
-    <div class="form-group">
+    <div class="form-group" data-ng-controller="NarrowItDownController">
       <input type="text" placeholder="search term" class="form-control">
     </div>
     <div class="form-group narrow-button">
