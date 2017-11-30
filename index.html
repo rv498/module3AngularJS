@@ -1,28 +1,39 @@
-<!doctype html>
-<html lang="en" data-ng-app="NarrowItDownApp">
+<!DOCTYPE html>
+<html ng-app='NarrowItDownApp'>
   <head>
-    <title>Narrow Down Your Menu Choice</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="styles/bootstrap.min.css">
-    <link rel="stylesheet" href="styles/styles.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
-    <script src="app.js"></script>
+    <title>Narrow It Down App</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta charset="UTF-8">
+       <!-- load bootstrap -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+
+ 
     
   </head>
-<body>
-   <div class="container">
-    <h1>Narrow Down Your Chinese Menu Choice</h1>
+  <body>
 
-    <div class="form-group" data-ng-controller="NarrowItDownController">
-      <input type="text" placeholder="search term" class="form-control">
-    </div>
-    <div class="form-group narrow-button">
-      <button class="btn btn-primary">Narrow It Down For Me!</button>
-    </div>
+    <div class="container" ng-controller="NarrowItDownController as NarrowDown">
+      <h1>Narrow Down Your Chinese Menu Choice</h1>
+        <div class="form-group">
+            <input type="text" placeholder="search term" class="form-control">
+        </div>
+         <div class="form-group narrow-button">
+             <button class="btn btn-primary" ng-click="NarrowDown.search();">Narrow It Down For Me!</button>
+        </div>
+   
+            
+      <ul>
+        <li ng-repeat="category in NarrowDown.categories">
+         
+          {{ category.name }},  {{ category.short_name }},  {{ category.id }}
+    
+        </li>
+      </ul>
+    
+      </div>
 
-    <!-- found-items should be implemented as a component -->
-    <found-items found-items="...." on-remove="...."></found-items>
-  </div>
-
-</body>
+     <!-- load angular via CDN -->
+    <script src="//code.angularjs.org/1.3.0-rc.1/angular.min.js"></script>
+    <script src="app.js"></script>
+  </body>
 </html>
