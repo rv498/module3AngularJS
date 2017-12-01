@@ -1,83 +1,142 @@
-(function() {
-    'use strict';
-    angular.module('NarrowItDownApp', [])
-        .controller('NarrowItDownController', NarrowItDownController)
-        .service('MenuSearchService', MenuSearchService)
-        .constant('ApiBasePath', "https://davids-restaurant.herokuapp.com")
-        .directive('foundItems', FoundItemsDirective);
+(function(){
+	'use strict';
 
-    function FoundItemsDirective() {
-        var ddo = {
-            templateUrl: 'foundItems.html',
-            scope: {
-                items: '<',
-                myTitle: '@title',
-                onRemove: '&'
-            },
-            controller: NarrowItDownController,
-            controllerAs: 'menu',
-            bindToController: true
-        };
+	angular.module('NarrowItDownApp', [])
+	.controller('NarrowItDownController', NarrowItDownController)
+	.service('MenuSearchService',MenuSearchService)
+	.directive('foundItems',FoundItems)
+	.constant('Api', 'https://davids-restaurant.herokuapp.com/menu_items.json');
 
-        return ddo;
-    }
+	function FoundItems(){
+		var ddo={
+			templateUrl:'template.html',
+			scope:{
+				foundItem:'<',
+				onRemove:'&',
+				error:'<'
 
-    function FoundItemsDirectiveController() {
-        var menu = this;
-    }
+			},
+			controller: NarrowItDownControllerDirective,
+			controllerAs:'ctrlDirective',
+			bindToController:true,
+			link: NarrowItDownDirectiveLink
+		};
 
-    NarrowItDownController.$inject = ['MenuSearchService'];
+		return ddo;
 
-    function NarrowItDownController(MenuSearchService) {
-        var menu = this;
-        menu.searchTerm = "";
-        menu.foundItems = "";
-        menu.search = function() {
-            menu.nothingFound = "";
-            if (menu.searchTerm) { // check if empty
-                var promise = MenuSearchService.getMatchedMenuItems(menu.searchTerm.toLowerCase());
-                promise.then(function(foundItems) {
-                    if (foundItems.length == 0) {
-                        menu.nothingFound = "Nothing found";
-                    }
-                    menu.foundItems = foundItems;
-                })
+	};
 
-            } else {
-                menu.nothingFound = "Nothing found";
-                menu.foundItems = "";
-            }
-        };
-        menu.removeItem = function(itemIndex) {
-            menu.foundItems.splice(itemIndex, 1);
-        };
-    }
+	function NarrowItDownDirectiveLink(scope,element,attrs,controller){
+		scope.$watch('ctrlDirective.nothingFound()', function(newValue,oldValue){
+			if(newValue===true){
+				displayNothingFound();
+			}else{
+				removeNothingFound();
+			}
+		});
 
-    MenuSearchService.$inject = ['$http', 'ApiBasePath']
+		function displayNothingFound(){
+			var nothingFoundElement=element.find('p');
+			nothingFoundElement.css('display','inline');
 
-    function MenuSearchService($http, ApiBasePath) {
-        var service = this;
-        service.getMatchedMenuItems = function(searchTerm) {
-            var response = $http({
-                method: "GET",
-                url: (ApiBasePath + "/menu_items.json")
-            });
+		};
 
-            return response.then(function(result) {
-                var menuData = result.data;
-                var foundItems = [];
-                menuData.menu_items.forEach(function(item) {
-                    if (item.description.indexOf(searchTerm) != -1) {
-                        foundItems.push({
-                            name: item.name,
-                            short_name: item.short_name,
-                            description: item.description
-                        });
-                    }
-                });
-                return foundItems;
-            });
-        };
-    }
+		function removeNothingFound(){
+			var nothingFoundElement=element.find('p');
+			nothingFoundElement.css('display','none')
+		};
+
+	};
+
+	function NarrowItDownControllerDirective(){
+		var ctrlDirective=this;
+		ctrlDirective.nothingFound=function(){
+			if(ctrlDirective.error){
+				return true;
+			};
+			return false;
+		};
+
+		ctrlDirective.someFound=function(){
+			if(ctrlDirective.foundItem.length===0){
+				return false;
+			};
+			return true;
+		};
+
+
+
+	};
+
+
+	NarrowItDownController.$inject=['MenuSearchService'];
+	function NarrowItDownController(MenuSearchService){
+		var ctrl=this;
+		ctrl.found=[];
+		ctrl.searchTerm='';
+		ctrl.error=false;
+
+		ctrl.getMatchedMenuItems=function(searchTerm){
+			MenuSearchService.removeAll();
+			var promise= MenuSearchService.getMatchedMenuItems(searchTerm);
+			promise
+			.then(function(succ){
+				if(succ.length===0 || searchTerm==='' ){
+					ctrl.found=[];
+					ctrl.error=true;
+				}else{
+					ctrl.error=false;
+					ctrl.found=succ;
+
+				}
+			})
+
+		};
+
+		ctrl.removeItem=function(index){
+			MenuSearchService.removeItem(index);
+		};
+
+
+
+
+
+	};
+	MenuSearchService.$inject=['$http','Api'];
+	function MenuSearchService($http,Api){
+		var service=this;
+		var matchedItems=[];
+
+		service.getMatchedMenuItems=function(searchTerm){
+
+			var response=
+			$http({
+				url: Api
+			})
+			.then(function(succ){
+				var list=succ.data.menu_items;
+				for (var i = 0; i < list.length; i++) {
+					var description=list[i].description;
+					if(description.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1){
+						matchedItems.push(list[i])
+					}
+				}
+				return matchedItems;
+			})
+			return response;
+		};
+
+		service.removeItem=function(index){
+			matchedItems.splice(index,1);
+		};
+
+		service.removeAll=function(){
+			matchedItems=[];
+			return matchedItems;
+		};
+	};
+
+
+
 
 })();
