@@ -1,142 +1,71 @@
-(function(){
-	'use strict';
+(function () {
+'use strict';
 
-	angular.module('NarrowItDownApp', [])
-	.controller('NarrowItDownController', NarrowItDownController)
-	.service('MenuSearchService',MenuSearchService)
-	.directive('foundItems',FoundItems)
-	.constant('Api', 'https://davids-restaurant.herokuapp.com/menu_items.json');
+angular.module('NarrowItDownApp', [])
+.controller('NarrowItDownController', NarrowItDownController)
+.service('MenuSearchService', MenuSearchService)
+.constant('ApiBasePath', "https://davids-restaurant.herokuapp.com")
+.directive('foundItems', foundItems);
 
-	function FoundItems(){
-		var ddo={
-			templateUrl:'foundItems.html',
-			scope:{
-				foundItem:'<',
-				onRemove:'&',
-				error:'<'
+function foundItems(){
+  var ddo = {
+    restrict: "E",
+    templateUrl: "foundItems.html",
+    scope: {
+      foundItems: '<',
+      onRemove: '&'
+    },
+    controller: NarrowItDownController,
+    controllerAs: 'ctrl',
+    bindToController: true
+  };
 
-			},
-			controller: NarrowItDownControllerDirective,
-			controllerAs:'ctrlDirective',
-			bindToController:true,
-			link: NarrowItDownDirectiveLink
-		};
+  return ddo;
+}
 
-		return ddo;
+MenuSearchService.$inject = ['$http', 'ApiBasePath'];
+function MenuSearchService($http, ApiBasePath) {
+  var service = this;
 
-	};
+  service.getMatchedMenuItems = function (searchTerm) {
+    var response = $http({
+      method: "GET",
+      url: (ApiBasePath + "/menu_items.json")
+    }).then(function(result) {
+      var foundItems = result.data.menu_items.filter(function(value) {
+        return value.description.toLowerCase().indexOf(searchTerm.toLowerCase()) != -1;
+      });
 
-	function NarrowItDownDirectiveLink(scope,element,attrs,controller){
-		scope.$watch('ctrlDirective.nothingFound()', function(newValue,oldValue){
-			if(newValue===true){
-				displayNothingFound();
-			}else{
-				removeNothingFound();
-			}
-		});
+      return foundItems;
+    });
 
-		function displayNothingFound(){
-			var nothingFoundElement=element.find('p');
-			nothingFoundElement.css('display','inline');
+    return response;
+  };
+}
 
-		};
+NarrowItDownController.$inject = ['MenuSearchService'];
+function NarrowItDownController(MenuSearchService) {
+  var ctrl = this;
 
-		function removeNothingFound(){
-			var nothingFoundElement=element.find('p');
-			nothingFoundElement.css('display','none')
-		};
+  ctrl.narrowItems = function () {
+    var searchTerm = ctrl.searchTerm || '';
+    if (searchTerm.trim() === '') {
+      ctrl.found = [];
+      return;
+    }
 
-	};
+    var promise = MenuSearchService.getMatchedMenuItems(searchTerm);
+    promise.then(function (response) {
+      ctrl.found = response;
+    })
+    .catch(function (error) {
+      console.log(error);
+    })
+  };
 
-	function NarrowItDownControllerDirective(){
-		var ctrlDirective=this;
-		ctrlDirective.nothingFound=function(){
-			if(ctrlDirective.error){
-				return true;
-			};
-			return false;
-		};
-
-		ctrlDirective.someFound=function(){
-			if(ctrlDirective.foundItem.length===0){
-				return false;
-			};
-			return true;
-		};
-
-
-
-	};
-
-
-	NarrowItDownController.$inject=['MenuSearchService'];
-	function NarrowItDownController(MenuSearchService){
-		var ctrl=this;
-		ctrl.found=[];
-		ctrl.searchTerm='';
-		ctrl.error=false;
-
-		ctrl.getMatchedMenuItems=function(searchTerm){
-			MenuSearchService.removeAll();
-			var promise= MenuSearchService.getMatchedMenuItems(searchTerm);
-			promise
-			.then(function(succ){
-				if(succ.length===0 || searchTerm==='' ){
-					ctrl.found=[];
-					ctrl.error=true;
-				}else{
-					ctrl.error=false;
-					ctrl.found=succ;
-
-				}
-			})
-
-		};
-
-		ctrl.removeItem=function(index){
-			MenuSearchService.removeItem(index);
-		};
-
-
-
-
-
-	};
-	MenuSearchService.$inject=['$http','Api'];
-	function MenuSearchService($http,Api){
-		var service=this;
-		var matchedItems=[];
-
-		service.getMatchedMenuItems=function(searchTerm){
-
-			var response=
-			$http({
-				url: Api
-			})
-			.then(function(succ){
-				var list=succ.data.menu_items;
-				for (var i = 0; i < list.length; i++) {
-					var description=list[i].description;
-					if(description.toLowerCase().indexOf(searchTerm.toLowerCase())!==-1){
-						matchedItems.push(list[i])
-					}
-				}
-				return matchedItems;
-			})
-			return response;
-		};
-
-		service.removeItem=function(index){
-			matchedItems.splice(index,1);
-		};
-
-		service.removeAll=function(){
-			matchedItems=[];
-			return matchedItems;
-		};
-	};
-
-
-
+  ctrl.removeItem = function(index) {
+    ctrl.found.splice(index, 1);
+  };
+}
 
 })();
